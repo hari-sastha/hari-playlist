@@ -6,7 +6,53 @@ const nowPlayingTitle = document.getElementById("nowPlayingTitle");
 /** @type {{ audio: HTMLAudioElement, card: HTMLElement, title: string } | null} */
 let active = null;
 
+/** @type {{ audio: HTMLAudioElement, card: HTMLElement, title: string }[]} */
+let playlist = [];
+
+/** @type {number} */
+let activeIndex = -1;
+
+/** @type {number | null} */
+let autoNextTimerId = null;
+
+function clearAutoNextTimer() {
+	if (autoNextTimerId !== null) {
+		clearTimeout(autoNextTimerId);
+		autoNextTimerId = null;
+	}
+}
+
+function playNextAfterDelay(delayMs) {
+	clearAutoNextTimer();
+	if (!playlist.length) return;
+	if (activeIndex < 0) return;
+
+	autoNextTimerId = window.setTimeout(() => {
+		autoNextTimerId = null;
+
+		if (!playlist.length) return;
+		const nextIndex = (activeIndex + 1) % playlist.length;
+		const next = playlist[nextIndex];
+		if (!next) return;
+
+		try {
+			next.audio.currentTime = 0;
+		} catch {
+			// ignore
+		}
+
+		// This will trigger the 'play' listener and update active state.
+		const p = next.audio.play();
+		if (p && typeof p.catch === "function") {
+			p.catch(() => {
+				// Autoplay may be blocked by browser policies.
+			});
+		}
+	}, delayMs);
+}
+
 function setActive(next) {
+	clearAutoNextTimer();
 	if (active && active.audio !== next.audio) {
 		active.audio.pause();
 		// Requirement: when switching to another song, replaying the previous
@@ -69,9 +115,18 @@ function createSongCard(song, index) {
 	audio.className = "nativeAudio";
 
 	audio.addEventListener("play", () => {
+		activeIndex = index;
 		setActive({ audio, card, title: song.title });
 		// Ensure the active one is not muted by default
 		if (audio.muted) audio.muted = false;
+	});
+
+	audio.addEventListener("ended", () => {
+		// Requirement: if a song played completely, after 3 seconds play next song.
+		// Only auto-advance if this ended audio is the active one.
+		if (active && active.audio === audio) {
+			playNextAfterDelay(3000);
+		}
 	});
 
 	controls.appendChild(audio);
@@ -89,8 +144,14 @@ function init() {
 	}
 
 	grid.innerHTML = "";
+	playlist = [];
+	activeIndex = -1;
+	clearAutoNextTimer();
 	SONGS.slice(0, 12).forEach((song, i) => {
-		grid.appendChild(createSongCard(song, i));
+		const card = createSongCard(song, i);
+		const audio = /** @type {HTMLAudioElement|null} */ (card.querySelector("audio"));
+		if (audio) playlist.push({ audio, card, title: song.title });
+		grid.appendChild(card);
 	});
 }
 
