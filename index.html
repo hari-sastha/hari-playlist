@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Music Player</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header class="topbar">
+			<div class="brand">
+				<div class="brand__title">Hari's Play List.</div>
+				<div class="brand__subtitle">Pick a track • listen and enjoy</div>
+			</div>
+			<div id="nowPlaying" class="now" aria-live="polite">
+				<span class="now__label">Now playing</span>
+				<span id="nowPlayingTitle" class="now__title">—</span>
+			</div>
+		</header>
+
+		<main class="shell">
+			<section class="grid" id="songGrid" aria-label="Song list"></section>
+		</main>
+
+		<script src="songs.js"></script>
+		<script src="app.js"></script>
+	</body>
+</html>

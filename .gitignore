@@ -1,0 +1,12 @@
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+
+# VS Code
+.vscode/
+
+# Node/Python caches (safe to ignore even if unused)
+node_modules/
+__pycache__/
+*.pyc
